@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -53,8 +54,7 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 
 	_, err = w.Write(resp)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		log.Println(err)
 	}
 }
 
@@ -103,7 +103,7 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(resp)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println(err)
 		return
 	}
 }
@@ -111,12 +111,11 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 func deleteTask(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	if _, exists := tasks[id]; exists {
-		delete(tasks, id)
-	} else {
+	if _, exists := tasks[id]; !exists {
 		http.Error(w, "Таск не найден", http.StatusBadRequest)
 		return
 	}
+	delete(tasks, id)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -133,7 +132,7 @@ func main() {
 	r.Get("/tasks", getTasks)
 	r.Post("/tasks", postTask)
 	r.Get("/tasks/{id}", getTask)
-	r.Delete("/artist/{id}", deleteTask)
+	r.Delete("/tasks/{id}", deleteTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
